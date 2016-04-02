@@ -81,32 +81,16 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       (restore-user ,username)
       ,@body)))
 
-(defun ensure-hash-tree! (ht keys &key (test 'eql))
-  (labels ((proc (ht keys)
-             (unless (null keys)
-               (anaphora:aif (gethash (car keys) ht)
-                    (if (hash-table-p anaphora:it)
-                        (proc anaphora:it (cdr keys))
-                        (error "Hash tree error: Hash value is non-table"))
-                    (progn
-                      (setf (gethash (car keys) ht)
-                            (make-hash-table :test test))
-                      (proc (gethash (car keys) ht) (cdr keys)))))))
-    (proc ht keys)
-    ht))
-
 (defun get-user-data (username fieldspecs)
   (ubiquitous:with-transaction ()
     (restore-user username)
-    (let ((res (make-hash-table)))
+    (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
       (do-fieldspecs (names tspec fieldspecs)
-        (when (< 1 (length names))
-          (ensure-hash-tree! res (butlast names)))
-        (setf (cl-hash-util:hget res names)
-              (gadgets:aif2only
-               (apply #'ubiquitous:value names)
-               anaphora:it
-               (getf tspec :initial)))))))
+        (cl-hash-util:collect names
+          (gadgets:aif2only
+           (apply #'ubiquitous:value names)
+           anaphora:it
+           (getf tspec :initial)))))))
 
 (defun set-user-data (username &rest key/s-and-values)
   (ubiquitous:with-transaction ()
@@ -115,5 +99,4 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
      (lambda (keys value)
        (setf (apply #'ubiquitous:value (ensure-list keys)) value))
      key/s-and-values)))
-
 
