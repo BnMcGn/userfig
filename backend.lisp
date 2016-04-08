@@ -44,7 +44,9 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       :initial (getf fspec :initial)
       :viewable (getf fspec :viewable t)
       :editable (getf fspec :editable t)
-      :type (validate-typespec (getf fspec :type :string))
+      :compiled-validator (webhax-validate:compile-validator
+                           (getf fspec :type :string))
+      :type (getf fspec :type :string)
       :description (getf fspec :description "")
       :documentation (getf fspec :documentation "")))))
 
@@ -109,9 +111,14 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
               (gethash names data))))))
 
 (defun validate-field (value spec)
-  )
+  (multiple-value-bind (data signal)
+      (funcall (getf spec :compiled-validator) value)
+    (if signal
+        data
+        (error data))))
 
 (defun update-from-user (username fieldspecs data-hash)
+  ;;data-hash doesn't need to have all of the fields in fieldspecs
   (apply
    #'set-user-data (list username)
    (gadgets:collecting

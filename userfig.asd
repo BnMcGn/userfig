@@ -12,7 +12,8 @@
                #:parenscript
                #:cl-react
                #:ps-gadgets
-               #:cl-json)
+               #:cl-json
+               #:webhax-validate)
   :serial t
   :components ((:file "package")
                (:file "backend")
