@@ -100,3 +100,26 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
        (setf (apply #'ubiquitous:value (ensure-list keys)) value))
      key/s-and-values)))
 
+(defun get-prepped-user-data (username fieldspecs)
+  (let ((res (make-hash-table))
+        (data (get-user-data username fieldspecs)))
+    (do-fieldspecs (names tspec fieldspecs)
+      (when (getf tspec :visible)
+        (setf (cl-hash-util:hget/extend res names)
+              (gethash names data))))))
+
+(defun validate-field (value spec)
+  )
+
+(defun update-from-user (username fieldspecs data-hash)
+  (apply
+   #'set-user-data (list username)
+   (gadgets:collecting
+     (do-fieldspecs (names spec fieldspecs)
+      (when (getf spec :editable)
+        (multiple-value-bind (value failkeys)
+            (cl-hash-util:hget/extend data-hash names)
+          (unless failkeys
+            (validate-field value spec)
+            (gadgets:collect names)
+            (gadgets:collect value))))))))
