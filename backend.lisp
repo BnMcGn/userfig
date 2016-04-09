@@ -50,11 +50,6 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       :description (getf fspec :description "")
       :documentation (getf fspec :documentation "")))))
 
-(defun validate-typespec (tspec)
-  (or (member tspec '(:string :integer :boolean :datestamp))
-      (and (listp tspec)
-           (member (car tspec) '(:pickone :picksome)))))
-
 (defmacro do-fieldspecs ((names spec source) &body body)
   (with-gensyms (src rest curr)
     `(loop with ,src = ,source
@@ -67,6 +62,15 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
                   (,spec (car (last ,curr))))
               ,@body)))))
 
+(defun validate-fieldspecs (fieldspecs)
+  (gadgets:collecting
+    (do-fieldspecs (names spec fieldspecs)
+      (multiple-value-bind (nnames nspec)
+          (normalize-fieldspec (concatenate 'list names (list spec)))
+        (gadgets:collect nnames)
+        (gadgets:collect nspec)))))
+
+;;;In case that multiple user namespaces are ever needed:
 (defpackage #:userfig.usernames)
 (defparameter *username-package* 'userfig.usernames)
 
@@ -76,12 +80,6 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 (defun restore-user (username)
   (ubiquitous:restore (intern username (find-package *username-package*))))
-
-(eval-always
-  (defmacro with-user (username &body body)
-   `(progn
-      (restore-user ,username)
-      ,@body)))
 
 (defun get-user-data (username fieldspecs)
   (ubiquitous:with-transaction ()
@@ -102,7 +100,16 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
        (setf (apply #'ubiquitous:value (ensure-list keys)) value))
      key/s-and-values)))
 
-(defun get-prepped-user-data (username fieldspecs)
+(defun initialize-user (username fieldspecs)
+  (ubiquitous:with-transaction ()
+    (apply #'set-user-data
+           (list username)
+           (gadgets:collecting
+             (do-fieldspecs (names tspec fieldspecs)
+               (gadgets:collect names)
+               (gadgets:collect (getf tspec :initial)))))))
+
+(defun get-user-visible-data (username fieldspecs)
   (let ((res (make-hash-table))
         (data (get-user-data username fieldspecs)))
     (do-fieldspecs (names tspec fieldspecs)
@@ -116,6 +123,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (if signal
         data
         (error data))))
+
 
 (defun update-from-user (username fieldspecs data-hash)
   ;;data-hash doesn't need to have all of the fields in fieldspecs
