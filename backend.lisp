@@ -110,13 +110,11 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
                (gadgets:collect (getf tspec :initial)))))))
 
 (defun get-user-visible-data (username fieldspecs)
-  (let ((res (make-hash-table))
-        (data (get-user-data username fieldspecs)))
-    (do-fieldspecs (names tspec fieldspecs)
-      (when (getf tspec :visible)
-        (setf (cl-hash-util:hget/extend res names)
-              (gethash names data))))
-    res))
+  (let ((data (get-user-data username fieldspecs)))
+    (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
+      (do-fieldspecs (names tspec fieldspecs)
+        (when (getf tspec :visible)
+          (cl-hash-util:collect names (gethash names data)))))))
 
 (defun validate-field (value spec)
   (multiple-value-bind (data signal)
