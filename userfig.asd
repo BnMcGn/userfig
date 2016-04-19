@@ -13,7 +13,8 @@
                #:cl-react
                #:ps-gadgets
                #:cl-json
-               #:webhax-validate)
+               #:webhax-validate
+               #:http-body)
   :serial t
   :components ((:file "package")
                (:file "backend")

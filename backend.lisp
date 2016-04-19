@@ -67,7 +67,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (do-fieldspecs (names spec fieldspecs)
       (multiple-value-bind (nnames nspec)
           (normalize-fieldspec (concatenate 'list names (list spec)))
-        (gadgets:collect nnames)
+        (mapcar #'gadgets:collect nnames)
         (gadgets:collect nspec)))))
 
 ;;;In case that multiple user namespaces are ever needed:
@@ -103,7 +103,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 (defun initialize-user (username fieldspecs)
   (ubiquitous:with-transaction ()
     (apply #'set-user-data
-           (list username)
+           username
            (gadgets:collecting
              (do-fieldspecs (names tspec fieldspecs)
                (gadgets:collect names)
@@ -115,7 +115,8 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (do-fieldspecs (names tspec fieldspecs)
       (when (getf tspec :visible)
         (setf (cl-hash-util:hget/extend res names)
-              (gethash names data))))))
+              (gethash names data))))
+    res))
 
 (defun validate-field (value spec)
   (multiple-value-bind (data signal)
@@ -124,17 +125,20 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
         data
         (error data))))
 
-
+;;;FIXME: Silently ignores write attempts to uneditable & nonexistent fields.
+;;; Should fail instead
 (defun update-from-user (username fieldspecs data-hash)
   ;;data-hash doesn't need to have all of the fields in fieldspecs
   (apply
-   #'set-user-data (list username)
+   #'set-user-data username
    (gadgets:collecting
      (do-fieldspecs (names spec fieldspecs)
-      (when (getf spec :editable)
-        (multiple-value-bind (value failkeys)
-            (cl-hash-util:hget/extend data-hash names)
-          (unless failkeys
-            (validate-field value spec)
-            (gadgets:collect names)
-            (gadgets:collect value))))))))
+       (multiple-value-bind (value failkeys)
+           (cl-hash-util:hget/extend data-hash names)
+         (unless failkeys
+           (if (getf spec :editable)
+               (progn
+                 (validate-field value spec)
+                 (gadgets:collect names)
+                 (gadgets:collect value))
+               (error "Attempt to write to read-only field"))))))))
