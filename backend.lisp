@@ -13,6 +13,9 @@ Options are:
 :editable - t, nil, a symbol or a list of symbols. Symbols are roles for which
             editable is true.
 :type - Typespec
+:widget - A widget specifier. Optional. Widgets can generally be inferred from
+  :type.
+:config - Options to be passed through to the widget.
 :description - One line, brief description of field
 :documentation - More in-depth usage information.
 
@@ -34,8 +37,9 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 
 (defun normalize-fieldspec (fspec)
-  (let ((names (butlast fspec))
-        (fspec (car (last fspec))))
+  (let* ((names (butlast fspec))
+         (fspec (car (last fspec)))
+         (vspec (getf fspec :type :string)))
     (unless (every #'symbolp names)
       (error "Field names must be symbols"))
     (values
@@ -44,9 +48,13 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       :initial (getf fspec :initial)
       :viewable (getf fspec :viewable t)
       :editable (getf fspec :editable t)
-      :compiled-validator (webhax-validate:compile-validator
-                           (getf fspec :type :string))
+      :compiled-validator (webhax-validate:compile-validator vspec)
+      :widget (getf fspec :widget
+                    (webhax-validate:recommend-widget vspec))
+      :nullok (webhax-validate:nullok? vspec)
+      :options (webhax-validate:options-list vspec)
       :type (getf fspec :type :string)
+      :config (getf fspec :config)
       :description (getf fspec :description "")
       :documentation (getf fspec :documentation "")))))
 

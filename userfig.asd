@@ -14,7 +14,8 @@
                #:ps-gadgets
                #:cl-json
                #:webhax-validate
-               #:http-body)
+               #:http-body
+               #:cl-who)
   :serial t
   :components ((:file "package")
                (:file "backend")
