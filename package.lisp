@@ -1,7 +1,7 @@
 ;;;; package.lisp
 
 (defpackage #:userfig
-  (:use #:cl #:alexandria #:cl-who)
+  (:use #:cl #:alexandria #:cl-who #:parenscript #:cl-react)
   (:export
    #:get-user-data
    #:initialize-user

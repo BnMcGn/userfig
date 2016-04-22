@@ -1,6 +1,6 @@
 (in-package :userfig)
 
-(defparameter *userfig-url-path* "/userfig")
+(gadgets:eval-always (defparameter *userfig-url-path* "/userfig"))
 (defparameter *userfig-path-separator* "__")
 
 (defun path-internal->external (pathspec)
@@ -27,9 +27,11 @@
                    (user (gethash :username session))
                    (display-name (gethash :display-name session)))
               (cond
+                ((null user)
+                 '(403 nil ("403: Not logged in")))
                 ((gadgets:sequence-starts-with subpath "/get-user-info")
                  `(200 (:content-type "text/json")
-                       (,(cl-json:encode-json
+                       (,(cl-json:encode-json-to-string
                           (prep-user-data
                            (get-user-visible-data user vspecs))))))
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
@@ -39,18 +41,20 @@
                                          (getf env :raw-body))))
                    (print params)))
                 ((gadgets:sequence-starts-with subpath "/settings")
-                 (settings-page env))))
+                 `(200 (:content-type "text/html")
+                       (,(settings-page vspecs display-name))))))
             (funcall app env))))))
 
 (defun jsonify-fieldspecs (fieldspecs)
-  (cl-json:encode-json
-   (cl-hash-util:collecting-hash-table ()
+  (cl-json:encode-json-to-string
+   (cl-hash-util:collecting-hash-table (:mode :replace)
      (do-fieldspecs (names fspec fieldspecs)
        (cl-hash-util:collect (path-internal->external names)
-         (nth-value
-          1 (gadgets:extract-keywords '(:compiled-validator) fspec)))))))
+         (cl-hash-util:plist->alist
+          (nth-value
+           1 (gadgets:extract-keywords '(:compiled-validator) fspec))))))))
 
-(defun userfig-js (fieldspecs username)
+(defun userfig-js (fieldspecs)
   (ps
     (let ((fieldspecs
            (lisp-raw
@@ -66,10 +70,10 @@
             fieldspecs data
             (lambda (data)
               (json-bind (res save-url)
-                (say "Data saved")))
-            (chain document (get-element-by-id "userfig-form")))))))))
+                (say "Data saved"))))
+           (chain document (get-element-by-id "userfig-form"))))))))
 
-(defun settings-page (fieldspecs username display-name)
+(defun settings-page (fieldspecs display-name)
   (with-html-output-to-string (s)
     (:html
      (:head
@@ -83,16 +87,12 @@
       (:script :type "text/javascript"
                :src "/static/javascript/react-redux.js")
       (:script :type "text/javascript"
-               :src "javascript/jquery/1.9.1/jquery.min.js")
+               :src "/static/javascript/jquery/1.9.1/jquery.js")
       (:script :type "text/javascript" (str (cl-react:build)))
       (:script :type "text/javascript" (str (ps-gadgets:ps-gadgets)))
-      (:script :type "text/javascript" (str (ps-widgets:ps-widgets)))
-      (:script :type "text/javascript" (str (userfig-js fieldspecs username))))
-     (:body :onload "initialize-userfig();"
+      (:script :type "text/javascript" (str (webhax-widgets:ps-widgets)))
+      (:script :type "text/javascript" (str (userfig-js fieldspecs))))
+     (:body :onload "initializeUserfig();"
       (:h2 (format s "Settings: ~a" display-name))
-      (:div :id "userfig-form"))))
+      (:div :id "userfig-form" "asdf")))))
 
-
-(defun settings-page (env)
-  (declare (ignore env))
-  '(200 (:content-type "text/plain") ("here!!")))

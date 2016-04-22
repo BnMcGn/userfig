@@ -14,6 +14,7 @@
                #:ps-gadgets
                #:cl-json
                #:webhax-validate
+               #:webhax-widgets
                #:http-body
                #:cl-who)
   :serial t
