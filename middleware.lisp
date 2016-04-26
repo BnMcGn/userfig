@@ -8,8 +8,19 @@
           (concatenate 'string "~{~a~^" *userfig-path-separator* "~}")
           pathspec))
 
-(defun path-external->internal (pathspec)
-  (gadgets:split-sequence-on-subseq *userfig-path-separator* pathspec))
+(defun path-external->internal (pathspec fieldspecs)
+  (let ((pspec
+         (gadgets:split-sequence-on-subseq *userfig-path-separator* pathspec)))
+    (do-fieldspecs (names fspec fieldspecs)
+      (declare (ignore fspec))
+      (when (every #'gadgets:eq-symb pspec names)
+        names))))
+
+(defun make-external-name-map (fieldspecs)
+  (cl-hash-util:collecting-hash-table (:mode :replace)
+    (do-fieldspecs (names fspec fieldspecs)
+      (declare (ignore fspec))
+      (cl-hash-util:collect (path-internal->external names) names))))
 
 (defun prep-user-data (datahash)
   (cl-hash-util:collecting-hash-table (:mode :replace)
@@ -19,7 +30,8 @@
 
 (defun userfig-component (fieldspecs &key (url-path *userfig-url-path*))
   (lambda (app)
-    (let ((vspecs (validate-fieldspecs fieldspecs)))
+    (let ((vspecs (validate-fieldspecs fieldspecs))
+          (external-names (make-external-name-map fieldspecs)))
       (lambda (env)
         (if (gadgets:sequence-starts-with (getf env :path-info) url-path)
             (let* ((subpath (subseq (getf env :path-info) (length url-path)))
@@ -35,16 +47,25 @@
                           (prep-user-data
                            (get-user-visible-data user vspecs))))))
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
-                 (let ((params
-                        (http-body:parse (getf env :content-type)
-                                         (getf env :content-length)
-                                         (getf env :raw-body))))
-                   (print params)))
+                 (handle-set-user-info user env fieldspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
                  `(200 (:content-type "text/html")
                        (,(settings-page vspecs display-name))))))
             (funcall app env))))))
 
+(defun handle-set-user-info (user env fieldspecs name-map)
+  (let ((params (getf env :body-parameters)))
+    (update-from-user
+     user fieldspecs
+     (cl-hash-util:collecting-hash-table (:mode :replace)
+       (loop for (k . v) in params
+            do (anaphora:awhen (gethash k name-map)
+                 (cl-hash-util:collect anaphora:it v)))))
+    '(200 nil ("Saved changes"))))
+         ;(http-body:parse (getf env :content-type)
+         ;                 (getf env :content-length)
+         ;                 (getf env :raw-body))))
+ 
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
    (cl-hash-util:collecting-hash-table (:mode :replace)
@@ -69,7 +90,7 @@
            (webhax-form-element
             fieldspecs data
             (lambda (data)
-              (json-bind (res save-url)
+              (ps-gadgets:json-post-bind (res save-url data)
                 (say "Data saved"))))
            (chain document (get-element-by-id "userfig-form"))))))))
 
