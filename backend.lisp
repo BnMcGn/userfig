@@ -108,20 +108,28 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
        (setf (apply #'ubiquitous:value (ensure-list keys)) value))
      key/s-and-values)))
 
+(defun new-user-p (username)
+  (restore-user username)
+  (not (ubiquitous:value 'user-initialized-p)))
+
 (defun initialize-user (username fieldspecs)
-  (ubiquitous:with-transaction ()
-    (apply #'set-user-data
-           username
-           (gadgets:collecting
+  (apply #'set-user-data
+         username
+         (gadgets:collecting
              (do-fieldspecs (names tspec fieldspecs)
                (gadgets:collect names)
-               (gadgets:collect (getf tspec :initial)))))))
+               (gadgets:collect (let ((init (getf tspec :initial)))
+                                  (if (functionp init)
+                                      (funcall init)
+                                      init))))
+           (gadgets:collect 'user-initialized-p)
+           (gadgets:collect t))))
 
 (defun get-user-visible-data (username fieldspecs)
   (let ((data (get-user-data username fieldspecs)))
     (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
       (do-fieldspecs (names tspec fieldspecs)
-        (when (getf tspec :visible)
+        (when (getf tspec :viewable)
           (cl-hash-util:collect names (gethash names data)))))))
 
 (defun validate-field (value spec)
@@ -138,13 +146,11 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
   (apply
    #'set-user-data username
    (gadgets:collecting
-     (do-fieldspecs (names spec fieldspecs)
-       (multiple-value-bind (value failkeys)
-           (cl-hash-util:hget/extend data-hash names)
-         (unless failkeys
-           (if (getf spec :editable)
-               (progn
-                 (validate-field value spec)
-                 (gadgets:collect names)
-                 (gadgets:collect value))
-               (error "Attempt to write to read-only field"))))))))
+       (do-fieldspecs (names spec fieldspecs)
+         (multiple-value-bind (value signal) (gethash names data-hash)
+           (when signal
+             (if (getf spec :editable)
+                 (progn
+                   (gadgets:collect names)
+                   (gadgets:collect (validate-field value spec)))
+                 (error "Attempt to write to read-only field"))))))))

@@ -3,6 +3,9 @@
 (gadgets:eval-always (defparameter *userfig-url-path* "/userfig"))
 (defparameter *userfig-path-separator* "__")
 
+(defvar *session*)
+(defvar *env*)
+
 (defun path-internal->external (pathspec)
   (format nil
           (concatenate 'string "~{~a~^" *userfig-path-separator* "~}")
@@ -17,7 +20,7 @@
         names))))
 
 (defun make-external-name-map (fieldspecs)
-  (cl-hash-util:collecting-hash-table (:mode :replace)
+  (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
     (do-fieldspecs (names fspec fieldspecs)
       (declare (ignore fspec))
       (cl-hash-util:collect (path-internal->external names) names))))
@@ -38,6 +41,10 @@
                    (session (getf env :lack.session))
                    (user (gethash :username session))
                    (display-name (gethash :display-name session)))
+              (when (and user (new-user-p user))
+                (let ((*session* session)
+                      (*env* env))
+                  (initialize-user user vspecs)))
               (cond
                 ((null user)
                  '(403 nil ("403: Not logged in")))
@@ -47,7 +54,7 @@
                           (prep-user-data
                            (get-user-visible-data user vspecs))))))
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
-                 (handle-set-user-info user env fieldspecs external-names))
+                 (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
                  `(200 (:content-type "text/html")
                        (,(settings-page vspecs display-name))))))
@@ -57,7 +64,7 @@
   (let ((params (getf env :body-parameters)))
     (update-from-user
      user fieldspecs
-     (cl-hash-util:collecting-hash-table (:mode :replace)
+     (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
        (loop for (k . v) in params
             do (anaphora:awhen (gethash k name-map)
                  (cl-hash-util:collect anaphora:it v)))))
@@ -115,5 +122,5 @@
       (:script :type "text/javascript" (str (userfig-js fieldspecs))))
      (:body :onload "initializeUserfig();"
       (:h2 (format s "Settings: ~a" display-name))
-      (:div :id "userfig-form" "asdf")))))
+      (:div :id "userfig-form")))))
 
