@@ -38,7 +38,7 @@
       (lambda (env)
         (if (gadgets:sequence-starts-with (getf env :path-info) url-path)
             (let* ((subpath (subseq (getf env :path-info) (length url-path)))
-                   (session (getf env :lack.session))
+                   (session (webhax:session-from-env env))
                    (user (gethash :username session))
                    (display-name (gethash :display-name session)))
               (when (and user (new-user-p user))
@@ -78,9 +78,7 @@
    (cl-hash-util:collecting-hash-table (:mode :replace)
      (do-fieldspecs (names fspec fieldspecs)
        (cl-hash-util:collect (path-internal->external names)
-         (cl-hash-util:plist->alist
-          (nth-value
-           1 (gadgets:extract-keywords '(:compiled-validator) fspec))))))))
+         (webhax-validate:prep-fieldspec-body-for-json fspec))))))
 
 (defun userfig-js (fieldspecs)
   (ps

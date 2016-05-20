@@ -34,29 +34,17 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 |#
 
-
-
-(defun normalize-fieldspec (fspec)
-  (let* ((names (butlast fspec))
-         (fspec (car (last fspec)))
-         (vspec (getf fspec :type :string)))
+(defun normalize-userfig-fieldspec (fspec)
+  (let ((names (butlast fspec))
+        (fspec (car (last fspec))))
     (unless (every #'symbolp names)
       (error "Field names must be symbols"))
     (values
      names
-     (list
-      :initial (getf fspec :initial)
+     (list*
       :viewable (getf fspec :viewable t)
       :editable (getf fspec :editable t)
-      :compiled-validator (webhax-validate:compile-validator vspec)
-      :widget (getf fspec :widget
-                    (webhax-validate:recommend-widget vspec))
-      :nullok (webhax-validate:nullok? vspec)
-      :options (webhax-validate:options-list vspec)
-      :type (getf fspec :type :string)
-      :config (getf fspec :config)
-      :description (getf fspec :description "")
-      :documentation (getf fspec :documentation "")))))
+      (webhax-validate:normalize-fieldspec-body fspec)))))
 
 (defmacro do-fieldspecs ((names spec source) &body body)
   (with-gensyms (src rest curr)
@@ -74,7 +62,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
   (gadgets:collecting
     (do-fieldspecs (names spec fieldspecs)
       (multiple-value-bind (nnames nspec)
-          (normalize-fieldspec (concatenate 'list names (list spec)))
+          (normalize-userfig-fieldspec (concatenate 'list names (list spec)))
         (mapcar #'gadgets:collect nnames)
         (gadgets:collect nspec)))))
 
@@ -112,6 +100,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
   (restore-user username)
   (not (ubiquitous:value 'user-initialized-p)))
 
+;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)
   (apply #'set-user-data
          username
