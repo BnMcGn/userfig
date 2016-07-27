@@ -42,8 +42,8 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (values
      names
      (list*
-      :viewable (getf fspec :viewable t)
-      :editable (getf fspec :editable t)
+      :viewable (gadgets:or2 (gadgets:fetch-keyword :viewable fspec) t)
+      :editable (gadgets:or2 (gadgets:fetch-keyword :editable fspec) t)
       (webhax-validate:normalize-fieldspec-body fspec)))))
 
 (defmacro do-fieldspecs ((names spec source) &body body)
@@ -128,18 +128,20 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
         data
         (error data))))
 
-;;;FIXME: Silently ignores write attempts to uneditable & nonexistent fields.
-;;; Should fail instead
 (defun update-from-user (username fieldspecs data-hash)
   ;;data-hash doesn't need to have all of the fields in fieldspecs
-  (apply
-   #'set-user-data username
-   (gadgets:collecting
-       (do-fieldspecs (names spec fieldspecs)
-         (multiple-value-bind (value signal) (gethash names data-hash)
-           (when signal
-             (if (getf spec :editable)
-                 (progn
-                   (gadgets:collect names)
-                   (gadgets:collect (validate-field value spec)))
-                 (error "Attempt to write to read-only field"))))))))
+  (let ((keys (alexandria:hash-table-keys data-hash))
+        (setkeys nil)
+        (data
+         (gadgets:collecting
+             (do-fieldspecs (names spec fieldspecs)
+               (multiple-value-bind (value signal) (gethash names data-hash)
+                 (when signal
+                   (if (getf spec :editable)
+                       (progn
+                         (gadgets:collect names)
+                         (gadgets:collect (validate-field value spec)))
+                       (error "Attempt to write to read-only field"))))))))
+    (unless (eq (length keys) (length setkeys))
+      (error "Attempt to write to non-existent field"))
+    (apply #'set-user-data username data)))
