@@ -130,18 +130,19 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 (defun update-from-user (username fieldspecs data-hash)
   ;;data-hash doesn't need to have all of the fields in fieldspecs
-  (let ((keys (alexandria:hash-table-keys data-hash))
-        (setkeys nil)
-        (data
-         (gadgets:collecting
-             (do-fieldspecs (names spec fieldspecs)
-               (multiple-value-bind (value signal) (gethash names data-hash)
-                 (when signal
-                   (if (getf spec :editable)
-                       (progn
-                         (gadgets:collect names)
-                         (gadgets:collect (validate-field value spec)))
-                       (error "Attempt to write to read-only field"))))))))
+  (let* ((keys (alexandria:hash-table-keys data-hash))
+         (setkeys nil)
+         (data
+          (gadgets:collecting
+              (do-fieldspecs (names spec fieldspecs)
+                (multiple-value-bind (value signal) (gethash names data-hash)
+                  (when signal
+                    (if (getf spec :editable)
+                        (progn
+                          (push names setkeys)
+                          (gadgets:collect names)
+                          (gadgets:collect (validate-field value spec)))
+                        (error "Attempt to write to read-only field"))))))))
     (unless (eq (length keys) (length setkeys))
       (error "Attempt to write to non-existent field"))
     (apply #'set-user-data username data)))

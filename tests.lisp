@@ -5,14 +5,14 @@
 
 (defparameter *fields-raw*
   '(:email
-    (:type :email
+    (:email
      :description "Your email address")
     :favorite :day-of-month
-    (:type (:pickone 1 3 18)
+    ((:pickone 1 3 18)
      :description "Favorite day of the month"
      :documentation "Other days are available by special request")
     :system :watch-level
-    (:type :integer
+    (:integer
      :initial 4
      :viewable nil
      :editable nil
@@ -38,10 +38,10 @@
   (is-values (gethash '(:system :watch-level) udata) '(nil nil))
   (ok (not (gethash '(:email) udata))))
 
-(let ((indata (make-hash-table)))
-  (setf (gethash :email indata) "asdfasdf")
+(let ((indata (make-hash-table :test #'equal)))
+  (setf (gethash '(:email) indata) "asdfasdf")
   (is-error (update-from-user *uname* *fields* indata) 'simple-error)
-  (setf (gethash :email indata) "asdf@asd.f")
+  (setf (gethash '(:email) indata) "asdf@asd.f")
   (ok (update-from-user *uname* *fields* indata))
   (setf (hu:hget/extend indata '(:system :watch-level)) 0)
   (is-error (update-from-user *uname* *fields* indata) 'simple-error))
