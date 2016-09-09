@@ -72,13 +72,13 @@
          ;(http-body:parse (getf env :content-type)
          ;                 (getf env :content-length)
          ;                 (getf env :raw-body))))
- 
+
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
-   (cl-hash-util:collecting-hash-table (:mode :replace)
-     (do-fieldspecs (names fspec fieldspecs)
-       (cl-hash-util:collect (path-internal->external names)
-         (webhax-validate:prep-fieldspec-body-for-json fspec))))))
+   (gadgets:collecting
+       (do-fieldspecs (names fspec fieldspecs)
+         (gadgets:collect (path-internal->external names))
+         (gadgets:collect webhax-validate:prep-fieldspec-body-for-json fspec)))))
 
 (defun userfig-js (fieldspecs)
   (ps
