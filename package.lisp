@@ -8,5 +8,6 @@
    #:initialize-user
    #:get-user-visible-data
    #:update-from-user
-   #:userfig-component))
+   #:userfig-component
+   #:userfig-value))
 

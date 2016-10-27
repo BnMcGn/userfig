@@ -89,6 +89,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
            (getf tspec :initial)))))))
 
 (defun set-user-data (username &rest key/s-and-values)
+  "This function does no safety checking!"
   (ubiquitous:with-transaction ()
     (restore-user username)
     (gadgets:map-by-2

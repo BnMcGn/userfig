@@ -31,6 +31,9 @@
      (lambda (k v) (cl-hash-util:collect (path-internal->external k) v))
      datahash)))
 
+;;;Will consist of a list: (username fieldspecs)
+(defparameter *current-parameters* nil)
+
 (defun userfig-component (fieldspecs &key (url-path *userfig-url-path*))
   (lambda (app)
     (let ((vspecs (validate-fieldspecs fieldspecs))
@@ -58,7 +61,22 @@
                 ((gadgets:sequence-starts-with subpath "/settings")
                  `(200 (:content-type "text/html")
                        (,(settings-page vspecs display-name))))))
-            (funcall app env))))))
+            (let ((*current-parameters*
+                   (list
+                    (gethash :username (webhax:session-from-env env))
+                    fieldspecs)))
+              (funcall app env)))))))
+
+;;FIXME: Need way to specify user more deliberately
+(defun userfig-value (&rest keys)
+  (ubiquitous:with-transaction ()
+    (restore-user (car *current-parameters*))
+    (apply #'ubiquitous:value keys)))
+
+(defsetf userfig-value (&rest keys) (set-to)
+  `(ubiquitous:with-transaction ()
+     (restore-user (car *current-parameters*))
+     (setf (ubiquitous:value ,@keys) ,set-to)))
 
 (defun handle-set-user-info (user env fieldspecs name-map)
   (let ((params (getf env :body-parameters)))
