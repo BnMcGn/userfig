@@ -67,15 +67,21 @@
                     fieldspecs)))
               (funcall app env)))))))
 
-;;FIXME: Need way to specify user more deliberately
+(defparameter *userfig-user* nil)
+
+(defun what-user? ()
+  (or *userfig-user*
+      (car *current-parameters*)
+      (error "No user name found")))
+
 (defun userfig-value (&rest keys)
   (ubiquitous:with-transaction ()
-    (restore-user (car *current-parameters*))
+    (restore-user (what-user?))
     (apply #'ubiquitous:value keys)))
 
 (defsetf userfig-value (&rest keys) (set-to)
   `(ubiquitous:with-transaction ()
-     (restore-user (car *current-parameters*))
+     (restore-user (what-user?))
      (setf (ubiquitous:value ,@keys) ,set-to)))
 
 (defun handle-set-user-info (user env fieldspecs name-map)
