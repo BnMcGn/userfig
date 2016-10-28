@@ -9,5 +9,6 @@
    #:get-user-visible-data
    #:update-from-user
    #:userfig-component
-   #:userfig-value))
+   #:userfig-value
+   #:*userfig-user*))
 

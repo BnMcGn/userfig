@@ -74,16 +74,6 @@
       (car *current-parameters*)
       (error "No user name found")))
 
-(defun userfig-value (&rest keys)
-  (ubiquitous:with-transaction ()
-    (restore-user (what-user?))
-    (apply #'ubiquitous:value keys)))
-
-(defsetf userfig-value (&rest keys) (set-to)
-  `(ubiquitous:with-transaction ()
-     (restore-user (what-user?))
-     (setf (ubiquitous:value ,@keys) ,set-to)))
-
 (defun handle-set-user-info (user env fieldspecs name-map)
   (let ((params (getf env :body-parameters)))
     (update-from-user

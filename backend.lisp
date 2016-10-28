@@ -74,32 +74,54 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 ;;; Interaction with ubiquitous
 ;;;;;;
 
-(defun restore-user (username)
-  (ubiquitous:restore (intern username (find-package *username-package*))))
+;;;FIXME: Userfig is going to run into scaling issues because ubiquitous
+;;; is, I think, holding all user info in memory. Will need to implement
+;;; a db backend for ubiquitous, or work out an alternative.
+
+(gadgets:eval-always
+  (defmacro with-userfig-restored (&body body)
+    `(progn (ubiquitous:restore 'userfig)
+            ,@body)))
 
 (defun get-user-data (username fieldspecs)
   (ubiquitous:with-transaction ()
-    (restore-user username)
-    (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
-      (do-fieldspecs (names tspec fieldspecs)
-        (cl-hash-util:collect names
-          (gadgets:aif2only
-           (apply #'ubiquitous:value names)
-           anaphora:it
-           (getf tspec :initial)))))))
+    (with-userfig-restored
+      (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
+       (do-fieldspecs (names tspec fieldspecs)
+         (cl-hash-util:collect names
+           (gadgets:aif2only
+            (apply #'ubiquitous:value (cons username names))
+            anaphora:it
+            (getf tspec :initial))))))))
 
 (defun set-user-data (username &rest key/s-and-values)
   "This function does no safety checking!"
   (ubiquitous:with-transaction ()
-    (restore-user username)
-    (gadgets:map-by-2
-     (lambda (keys value)
-       (setf (apply #'ubiquitous:value (ensure-list keys)) value))
-     key/s-and-values)))
+    (with-userfig-restored
+      (gadgets:map-by-2
+       (lambda (keys value)
+         (setf (apply #'ubiquitous:value (cons username (ensure-list keys)))
+               value))
+       key/s-and-values))))
 
+(defun userfig-value (&rest keys)
+  (ubiquitous:with-transaction ()
+    (with-userfig-restored
+      (apply #'ubiquitous:value (cons (what-user?) keys)))))
+
+(defsetf userfig-value (&rest keys) (set-to)
+  `(ubiquitous:with-transaction ()
+     (with-userfig-restored
+       (setf (ubiquitous:value (what-user?) ,@keys) ,set-to))))
+
+;;;;;;
+;;; End ubiquitous stuff
+;;;;;;
+
+;;;FIXME: Could just check for the username key, right?
 (defun new-user-p (username)
-  (restore-user username)
-  (not (ubiquitous:value 'user-initialized-p)))
+  (let ((*userfig-user* username))
+    (not (userfig-value 'user-initialized-p))))
 
 ;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)
