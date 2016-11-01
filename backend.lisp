@@ -90,7 +90,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
        (do-fieldspecs (names tspec fieldspecs)
          (cl-hash-util:collect names
            (gadgets:aif2only
-            (apply #'ubiquitous:value (cons username names))
+            (apply #'ubiquitous:value (list* 'users username names))
             anaphora:it
             (getf tspec :initial))))))))
 
@@ -100,19 +100,31 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (with-userfig-restored
       (gadgets:map-by-2
        (lambda (keys value)
-         (setf (apply #'ubiquitous:value (cons username (ensure-list keys)))
+         (setf (apply #'ubiquitous:value
+                      (list* 'users username (ensure-list keys)))
                value))
        key/s-and-values))))
 
 (defun userfig-value (&rest keys)
   (ubiquitous:with-transaction ()
     (with-userfig-restored
-      (apply #'ubiquitous:value (cons (what-user?) keys)))))
+      (apply #'ubiquitous:value (list* 'users (what-user?) keys)))))
 
 (defsetf userfig-value (&rest keys) (set-to)
   `(ubiquitous:with-transaction ()
      (with-userfig-restored
-       (setf (ubiquitous:value (what-user?) ,@keys) ,set-to))))
+       (setf (ubiquitous:value 'users (what-user?) ,@keys) ,set-to))))
+
+(defun map-users (func)
+  "Map over all of the users in userfig. Func is passed 2 parameters:
+the user name and a hash table containing user settings."
+  (ubiquitous:with-transaction ()
+    (with-userfig-restored
+      (let ((users (gethash 'users ubiquitous:*storage*)))
+        (gadgets:collecting
+            (dolist (username (alexandria:hash-table-keys users))
+              (gadgets:collect
+                  (funcall func username (gethash username users)))))))))
 
 ;;;;;;
 ;;; End ubiquitous stuff
@@ -169,3 +181,4 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (unless (eq (length keys) (length setkeys))
       (error "Attempt to write to non-existent field"))
     (apply #'set-user-data username data)))
+
