@@ -6,6 +6,9 @@
 (defvar *session*)
 (defvar *env*)
 
+(defun session-from-env (env)
+  (getf env :lack.session))
+
 (defun path-internal->external (pathspec)
   (format nil
           (concatenate 'string "~{~a~^" *userfig-path-separator* "~}")
@@ -41,7 +44,7 @@
       (lambda (env)
         (if (gadgets:sequence-starts-with (getf env :path-info) url-path)
             (let* ((subpath (subseq (getf env :path-info) (length url-path)))
-                   (session (webhax:session-from-env env))
+                   (session (session-from-env env))
                    (user (gethash :username session))
                    (display-name (gethash :display-name session)))
               (when (and user (new-user-p user))
@@ -63,7 +66,7 @@
                        (,(settings-page vspecs display-name))))))
             (let ((*current-parameters*
                    (list
-                    (gethash :username (webhax:session-from-env env))
+                    (gethash :username (session-from-env env))
                     fieldspecs)))
               (funcall app env)))))))
 
