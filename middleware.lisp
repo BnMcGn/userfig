@@ -78,17 +78,14 @@
       (error "No user name found")))
 
 (defun handle-set-user-info (user env fieldspecs name-map)
-  (let ((params (getf env :body-parameters)))
-    (update-from-user
-     user fieldspecs
-     (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
-       (loop for (k . v) in params
-            do (anaphora:awhen (gethash k name-map)
-                 (cl-hash-util:collect anaphora:it v)))))
-    '(200 nil ("Saved changes"))))
-         ;(http-body:parse (getf env :content-type)
-         ;                 (getf env :content-length)
-         ;                 (getf env :raw-body))))
+  (multiple-value-bind (values sig)
+      (webhax-validate:validate-batch
+       (getf env :body-parameters)
+       fieldspecs :translation-table (gadgets:invert-hash-table name-map))
+    (when sig
+      (update-from-user user fieldspecs values))
+    `(200 (:content-type "text/json")
+          (,(webval:batch-response-json values sig)))))
 
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
