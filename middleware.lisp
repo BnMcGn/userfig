@@ -85,14 +85,14 @@
     (when sig
       (update-from-user user fieldspecs values))
     `(200 (:content-type "text/json")
-          (,(webval:batch-response-json values sig)))))
+          (,(webhax-validate:batch-response-json values sig)))))
 
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
    (gadgets:collecting
        (do-fieldspecs (names fspec fieldspecs)
          (gadgets:collect (path-internal->external names))
-         (gadgets:collect webhax-validate:prep-fieldspec-body-for-json fspec)))))
+         (gadgets:collect (webhax-validate:prep-fieldspec-body-for-json fspec))))))
 
 (defun userfig-js (fieldspecs)
   (ps
@@ -106,11 +106,9 @@
       (defun initialize-userfig ()
         (ps-gadgets:json-bind (data data-url)
           (render
-           (webhax-form-element
-            fieldspecs data
-            (lambda (data)
-              (ps-gadgets:json-post-bind (res save-url data)
-                (say "Data saved"))))
+           (psx
+            (:webhax-form-connector :fieldspecs fieldspecs :data data
+                                    :validation-url save-url))
            (chain document (get-element-by-id "userfig-form"))))))))
 
 (defun settings-page (fieldspecs display-name)
