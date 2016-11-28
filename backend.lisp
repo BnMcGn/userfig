@@ -78,9 +78,11 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 ;;; is, I think, holding all user info in memory. Will need to implement
 ;;; a db backend for ubiquitous, or work out an alternative.
 
+(defparameter *userfig-realm* 'userfig)
+
 (gadgets:eval-always
   (defmacro with-userfig-restored (&body body)
-    `(progn (ubiquitous:restore 'userfig)
+    `(progn (ubiquitous:restore *userfig-realm*)
             ,@body)))
 
 (defun get-user-data (username fieldspecs)

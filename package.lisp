@@ -10,5 +10,7 @@
    #:update-from-user
    #:userfig-component
    #:userfig-value
-   #:*userfig-user*))
+   #:*userfig-user*
+   #:map-users
+   #:*userfig-realm*))
 
