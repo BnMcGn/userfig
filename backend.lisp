@@ -88,6 +88,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 (defun get-user-data (username fieldspecs)
   (ubiquitous:with-transaction ()
     (with-userfig-restored
+      (check-init)
       (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
        (do-fieldspecs (names tspec fieldspecs)
          (cl-hash-util:collect names
@@ -110,11 +111,13 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 (defun userfig-value (&rest keys)
   (ubiquitous:with-transaction ()
     (with-userfig-restored
+      (check-init)
       (apply #'ubiquitous:value (list* 'users (what-user?) keys)))))
 
 (defsetf userfig-value (&rest keys) (set-to)
   `(ubiquitous:with-transaction ()
      (with-userfig-restored
+       (check-init)
        (setf (ubiquitous:value 'users (what-user?) ,@keys) ,set-to))))
 
 (defun map-users (func)
@@ -136,6 +139,13 @@ the user name and a hash table containing user settings."
 (defun new-user-p (username)
   (let ((*userfig-user* username))
     (not (userfig-value 'user-initialized-p))))
+
+(defun initialized? ()
+  (ubiquitous:value 'users (what-user?) 'user-initialized-p))
+
+(defun check-init ()
+  (unless (initialized?)
+    (error "User is not initialized")))
 
 ;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)

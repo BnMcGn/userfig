@@ -70,6 +70,9 @@
                     fieldspecs)))
               (funcall app env)))))))
 
+(defun settings-url ()
+  (concatenate 'string *userfig-url-path* "/settings"))
+
 (defparameter *userfig-user* nil)
 
 (defun what-user? ()

@@ -12,5 +12,9 @@
    #:userfig-value
    #:*userfig-user*
    #:map-users
-   #:*userfig-realm*))
+   #:*userfig-realm*
+   #:settings-url
+   #:new-user-p
+   #:initialized?
+   #:check-init))
 

@@ -23,12 +23,14 @@
 
 (defparameter *uname* "hilee-uNprubabbl-Yooser-nAm12333")
 
+
 (plan 11)
 
 (ok (getf (getf *fields* :email) :viewable))
 (ok (functionp (getf (getf *fields* :email) :compiled-validator)))
 
 (initialize-user *uname* *fields*)
+(setf userfig:*userfig-user* *uname*)
 
 (let ((udata (get-user-data *uname* *fields*)))
   (is 4 (gethash '(:system :watch-level) udata))
@@ -50,4 +52,6 @@
   (is (gethash '(:email) udata) "asdf@asd.f")
   (is 4 (gethash '(:system :watch-level) udata)))
 
+(setf userfig:*userfig-user* nil)
 (finalize)
+
