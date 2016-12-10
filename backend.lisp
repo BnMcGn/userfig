@@ -135,17 +135,17 @@ the user name and a hash table containing user settings."
 ;;; End ubiquitous stuff
 ;;;;;;
 
-;;;FIXME: Could just check for the username key, right?
-(defun new-user-p (username)
-  (let ((*userfig-user* username))
-    (not (userfig-value 'user-initialized-p))))
-
 (defun initialized? ()
   (ubiquitous:value 'users (what-user?) 'user-initialized-p))
 
 (defun check-init ()
   (unless (initialized?)
     (error "User is not initialized")))
+
+;;;FIXME: Could just check for the username key, right?
+(defun new-user-p (username)
+  (let ((*userfig-user* username))
+    (not (initialized?))))
 
 ;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)
