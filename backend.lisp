@@ -136,7 +136,8 @@ the user name and a hash table containing user settings."
 ;;;;;;
 
 (defun initialized? ()
-  (ubiquitous:value 'users (what-user?) 'user-initialized-p))
+  (with-userfig-restored
+    (ubiquitous:value 'users (what-user?) 'user-initialized-p)))
 
 (defun check-init ()
   (unless (initialized?)
