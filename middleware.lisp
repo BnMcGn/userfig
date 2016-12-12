@@ -68,7 +68,12 @@
                    (list
                     (gethash :username (session-from-env env))
                     fieldspecs)))
-              (funcall app env)))))))
+              (funcall app
+                       (list*
+                        :userfig-initialize-user ;Pass initialize func. down
+                        (lambda (user)
+                          (initialize-user user vspecs))
+                        env))))))))
 
 (defun settings-url ()
   (concatenate 'string *userfig-url-path* "/settings"))

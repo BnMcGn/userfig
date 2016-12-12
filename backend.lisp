@@ -144,6 +144,7 @@ the user name and a hash table containing user settings."
 
 ;;;FIXME: Could just check for the username key, right?
 (defun new-user-p (username)
+  (declare (type (or string symbol) username))
   (let ((*userfig-user* username))
     (not (initialized?))))
 
