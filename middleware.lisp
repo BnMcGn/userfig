@@ -46,6 +46,8 @@
             (let* ((subpath (subseq (getf env :path-info) (length url-path)))
                    (session (session-from-env env))
                    (user (gethash :username session))
+                   ;;FIXME: Whole userthing needs a cleanup
+                   (*userfig-user* user)
                    (display-name (gethash :display-name session)))
               (when (and user (new-user-p user))
                 (let ((*session* session)
