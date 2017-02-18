@@ -64,8 +64,7 @@
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
                  (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
-                 `(200 (:content-type "text/html")
-                       (,(settings-page vspecs display-name))))))
+                 (settings-page vspecs display-name))))
             (let ((*current-parameters*
                    (list
                     (gethash :username (session-from-env env))
@@ -122,25 +121,18 @@
            (chain document (get-element-by-id "userfig-form"))))))))
 
 (defun settings-page (fieldspecs display-name)
-  (with-html-output-to-string (s)
-    (:html
-     (:head
-      (:title (format s "Settings for ~a" display-name))
-      (:script :type "text/javascript"
-        :src "https://cdnjs.cloudflare.com/ajax/libs/react/0.14.2/react.js")
-      (:script :type "text/javascript"
-        :src "https://cdnjs.cloudflare.com/ajax/libs/react/0.14.2/react-dom.js")
-      (:script :type "text/javascript"
-               :src "/static/javascript/redux.js")
-      (:script :type "text/javascript"
-               :src "/static/javascript/react-redux.js")
-      (:script :type "text/javascript"
-               :src "/static/javascript/jquery/1.9.1/jquery.js")
-      (:script :type "text/javascript" (str (cl-react:build)))
-      (:script :type "text/javascript" (str (ps-gadgets:ps-gadgets)))
-      (:script :type "text/javascript" (str (webhax-widgets:ps-widgets)))
-      (:script :type "text/javascript" (str (userfig-js fieldspecs))))
-     (:body :onload "initializeUserfig();"
-      (:h2 (format s "Settings: ~a" display-name))
-      (:div :id "userfig-form")))))
+  (funcall
+   (webhax:quick-page
+    #'webhax::react
+    #'webhax::redux
+    (webhax:add-part :@javascript #'webhax-widgets:ps-widgets)
+    (webhax:add-part :@javascript (lambda () (userfig-js fieldspecs)))
+    (lambda ()
+      (webhax:html-out
+        (:h2 (format webhax:*webhax-output* "Settings: ~a" display-name))
+        (:div :id "userfig-form")
+        ;;FIXME: This should be in body onLoad?
+        ;; Might not be reliable here.
+        (:script :type "text/javascript" "initializeUserfig();"))))
+   nil))
 
