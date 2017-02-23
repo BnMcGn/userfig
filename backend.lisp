@@ -145,9 +145,10 @@ the user name and a hash table containing user settings."
 
 ;;;FIXME: Could just check for the username key, right?
 (defun new-user-p (username)
+  "Make sure that username does not refer to an initialized user."
   (declare (type (or string symbol) username))
-  (let ((*userfig-user* username))
-    (not (initialized?))))
+  (with-userfig-restored
+    (not (ubiquitous:value 'users username 'user-initialized-p))))
 
 ;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)

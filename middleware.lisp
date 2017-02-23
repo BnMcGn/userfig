@@ -64,7 +64,8 @@
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
                  (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
-                 (settings-page vspecs display-name))))
+                 (let ((webhax:*web-env* env))
+                   (settings-page vspecs display-name)))))
             (let ((*current-parameters*
                    (list
                     (gethash :username (session-from-env env))
