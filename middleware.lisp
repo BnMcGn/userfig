@@ -64,7 +64,7 @@
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
                  (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
-                 (let ((webhax:*web-env* env))
+                 (let ((webhax-core:*web-env* env))
                    (settings-page vspecs display-name)))))
             (let ((*current-parameters*
                    (list
@@ -123,17 +123,16 @@
 
 (defun settings-page (fieldspecs display-name)
   (funcall
-   (webhax:quick-page
-    #'webhax::react
-    #'webhax::redux
-    (webhax:add-part :@javascript #'webhax-widgets:ps-widgets)
-    (webhax:add-part :@javascript (lambda () (userfig-js fieldspecs)))
-    (lambda ()
-      (webhax:html-out
-        (:h2 (format webhax:*webhax-output* "Settings: ~a" display-name))
-        (:div :id "userfig-form")
-        ;;FIXME: This should be in body onLoad?
-        ;; Might not be reliable here.
-        (:script :type "text/javascript" "initializeUserfig();"))))
-   nil))
+   (webhax-route:quick-page
+       (#'webhax-metaplate:react-parts
+        #'webhax-metaplate:redux-parts
+        :@javascript #'webhax-widgets:ps-widgets
+        :@javascript
+        (lambda () (userfig-js fieldspecs)))
+     (webhax-core:html-out
+       (:h2 (format webhax-core:*webhax-output* "Settings: ~a" display-name))
+       (:div :id "userfig-form")
+       ;;FIXME: This should be in body onLoad?
+       ;; Might not be reliable here.
+       (:script :type "text/javascript" "initializeUserfig();")))))
 

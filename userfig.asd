@@ -14,6 +14,8 @@
                #:ps-gadgets
                #:cl-json
                #:webhax-validate
+               #:webhax-core
+               #:webhax-route
                #:webhax-widgets
                #:http-body
                #:cl-who)
