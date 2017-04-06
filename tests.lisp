@@ -23,8 +23,31 @@
 
 (defparameter *uname* "hilee-uNprubabbl-Yooser-nAm12333")
 
+(defparameter *test-env1*
+  (list
+  :LACK.SESSION
+  (CL-HASH-UTIL:ALIST->HASH
+   `((:USERNAME . ,*uname*))
+   :EXISTING (MAKE-HASH-TABLE :TEST #'EQUAL))
+  :REQUEST-METHOD :GET :SCRIPT-NAME "" :PATH-INFO
+  "/userfig/get-user-info"
+  :SERVER-PROTOCOL :HTTP/1.1 :REQUEST-URI
+  "/userfig/get-user-info" :URL-SCHEME "http" :REMOTE-ADDR "127.0.0.1"
+  :BODY-PARAMETERS NIL))
 
-(plan 11)
+(defparameter *test-env2*
+  (list
+   :LACK.SESSION
+   (CL-HASH-UTIL:ALIST->HASH
+    `((:USERNAME . ,*uname*))
+    :EXISTING (MAKE-HASH-TABLE :TEST #'EQUAL))
+   :REQUEST-METHOD :GET :SCRIPT-NAME "" :PATH-INFO "/userfig/settings"
+   :SERVER-PROTOCOL :HTTP/1.1 :REQUEST-URI "/userfig/settings"
+   :URL-SCHEME "http" :REMOTE-ADDR "127.0.0.1" :REMOTE-PORT 39628
+   :QUERY-STRING NIL :CONTENT-TYPE NIL :CLACK.STREAMING T
+   :BODY-PARAMETERS NIL))
+
+(plan 15)
 
 (ok (getf (getf *fields* :email) :viewable))
 (ok (functionp (getf (getf *fields* :email) :compiled-validator)))
@@ -51,6 +74,13 @@
 (let ((udata (get-user-data *uname* *fields*)))
   (is (gethash '(:email) udata) "asdf@asd.f")
   (is 4 (gethash '(:system :watch-level) udata)))
+
+(let ((component (funcall (userfig-component *fields-raw*) nil))
+      (result nil))
+  (ok (setf result (funcall component *test-env1*)))
+  (ok (search "f@a" (car (third result))))
+  (ok (setf result (funcall component *test-env2*)))
+  (is "text/html" (second (second result))))
 
 (setf userfig:*userfig-user* nil)
 (finalize)
