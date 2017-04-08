@@ -34,6 +34,9 @@
      (lambda (k v) (cl-hash-util:collect (path-internal->external k) v))
      datahash)))
 
+(gadgets:eval-always
+  (defparameter *userfig-user* nil))
+
 ;;;Will consist of a list: (username fieldspecs)
 (defparameter *current-parameters* nil)
 
@@ -47,7 +50,7 @@
                    (session (session-from-env env))
                    (user (gethash :username session))
                    ;;FIXME: Whole userthing needs a cleanup
-                   (*userfig-user* user)
+                   (*userfig-user* (gethash :username session))
                    (display-name (gethash :display-name session)))
               (when (and user (new-user-p user))
                 (let ((*session* session)
@@ -79,8 +82,6 @@
 
 (defun settings-url ()
   (concatenate 'string *userfig-url-path* "/settings"))
-
-(defparameter *userfig-user* nil)
 
 (defun what-user? ()
   (or *userfig-user*
