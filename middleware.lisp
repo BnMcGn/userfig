@@ -92,7 +92,11 @@
   (multiple-value-bind (values sig)
       (webhax-validate:validate-batch
        (getf env :body-parameters)
-       fieldspecs :translation-table (gadgets:invert-hash-table name-map))
+       (gadgets:collecting
+           (do-fieldspecs (names spec fieldspecs)
+             (gadgets:collect names)
+             (gadgets:collect spec)))
+       :translation-table (gadgets:invert-hash-table name-map :test #'equal))
     (when sig
       (update-from-user user fieldspecs values))
     `(200 (:content-type "text/json")

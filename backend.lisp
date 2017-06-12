@@ -63,7 +63,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
     (do-fieldspecs (names spec fieldspecs)
       (multiple-value-bind (nnames nspec)
           (normalize-userfig-fieldspec (concatenate 'list names (list spec)))
-        (mapcar #'gadgets:collect nnames)
+        (mapc #'gadgets:collect nnames)
         (gadgets:collect nspec)))))
 
 ;;;In case that multiple user namespaces are ever needed:
