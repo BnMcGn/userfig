@@ -180,6 +180,8 @@ the user name and a hash table containing user settings."
 
 (defun update-from-user (username fieldspecs data-hash)
   ;;data-hash doesn't need to have all of the fields in fieldspecs
+  ;;FIXME: Maybe shouldn't update unchanged fields. Perhaps shouldn't
+  ;; validate them either?
   (let* ((keys (alexandria:hash-table-keys data-hash))
          (setkeys nil)
          (data

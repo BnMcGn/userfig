@@ -94,9 +94,11 @@
        (getf env :body-parameters)
        (gadgets:collecting
            (do-fieldspecs (names spec fieldspecs)
-             (gadgets:collect names)
-             (gadgets:collect spec)))
-       :translation-table (gadgets:invert-hash-table name-map :test #'equal))
+             (when (getf spec :editable nil)
+               (gadgets:collect names)
+               (gadgets:collect spec))))
+       :translation-table (gadgets:invert-hash-table name-map :test #'equal)
+       :existing-hash (make-hash-table :test 'equal) :edit t)
     (when sig
       (update-from-user user fieldspecs values))
     `(200 (:content-type "text/json")
@@ -122,7 +124,7 @@
         (ps-gadgets:json-bind (data data-url)
           (render
            (psx
-            (:webhax-form-connector :fieldspecs fieldspecs :data data
+            (:webhax-form :fieldspecs fieldspecs :data data
                                     :validation-url save-url))
            (chain document (get-element-by-id "userfig-form"))))))))
 
