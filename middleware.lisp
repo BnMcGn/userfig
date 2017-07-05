@@ -143,3 +143,7 @@
        ;; Might not be reliable here.
        (:script :type "text/javascript" "initializeUserfig();")))))
 
+;;Mostly for debugging.
+(defmacro with-env (env &body body)
+  `(let ((*userfig-user* (gethash :username (session-from-env ,env))))
+     ,@body))

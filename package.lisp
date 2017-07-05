@@ -16,5 +16,6 @@
    #:settings-url
    #:new-user-p
    #:initialized?
-   #:check-init))
+   #:check-init
+   #:with-env))
 
