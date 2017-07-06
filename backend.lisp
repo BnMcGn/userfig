@@ -52,7 +52,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
         while ,src
         do
           (multiple-value-bind (,curr ,rest)
-              (gadgets:divide-list+ #'listp ,src)
+              (gadgets:divide-after-true #'listp ,src)
             (setf ,src ,rest)
             (let ((,names (butlast ,curr))
                   (,spec (car (last ,curr))))
@@ -97,6 +97,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
             anaphora:it
             (getf tspec :initial))))))))
 
+;;FIXME: Need to add hooks or triggers for external value watching funcs.
 (defun set-user-data (username &rest key/s-and-values)
   "This function does no safety checking!"
   (ubiquitous:with-transaction ()
