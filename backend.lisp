@@ -132,6 +132,16 @@ the user name and a hash table containing user settings."
               (gadgets:collect
                   (funcall func username (gethash username users)))))))))
 
+(defun get-user-list ()
+  (map-users (lambda (name data) (declare (ignore data)) name)))
+
+(defun remove-user (username)
+  "WARNING: removes user specified by username with all settings from userfig."
+  (with-userfig-restored
+    (ubiquitous:remfield
+     (ubiquitous:value 'userfig::users) username)
+    (ubiquitous:offload)))
+
 ;;;;;;
 ;;; End ubiquitous stuff
 ;;;;;;

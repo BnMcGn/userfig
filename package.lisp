@@ -17,5 +17,7 @@
    #:new-user-p
    #:initialized?
    #:check-init
-   #:with-env))
+   #:with-env
+   #:get-user-list
+   #:remove-user))
 
