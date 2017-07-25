@@ -89,20 +89,22 @@
       (error "No user name found")))
 
 (defun handle-set-user-info (user env fieldspecs name-map)
-  (multiple-value-bind (values sig)
-      (webhax-validate:validate-batch
-       (getf env :body-parameters)
-       (gadgets:collecting
-           (do-fieldspecs (names spec fieldspecs)
-             (when (getf spec :editable nil)
-               (gadgets:collect names)
-               (gadgets:collect spec))))
-       :translation-table (gadgets:invert-hash-table name-map :test #'equal)
-       :existing-hash (make-hash-table :test 'equal) :edit t)
-    (when sig
-      (update-from-user user fieldspecs values))
-    `(200 (:content-type "text/json")
-          (,(webhax-validate:batch-response-json values sig)))))
+  (let ((rmap (gadgets:invert-hash-table name-map :test #'equal)))
+    (multiple-value-bind (values sig)
+       (webhax-validate:validate-batch
+        (getf env :body-parameters)
+        (gadgets:collecting
+            (do-fieldspecs (names spec fieldspecs)
+              (when (getf spec :editable nil)
+                (gadgets:collect names)
+                (gadgets:collect spec))))
+        :translation-table rmap
+        :existing-hash (make-hash-table :test 'equal) :edit t)
+     (when sig
+       (update-from-user user fieldspecs values))
+     `(200 (:content-type "text/json")
+           (,(webhax-validate:batch-response-json
+              (gadgets:rekey values rmap) sig))))))
 
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
