@@ -99,7 +99,8 @@
                 (gadgets:collect names)
                 (gadgets:collect spec))))
         :translation-table rmap
-        :existing-hash (make-hash-table :test 'equal) :edit t)
+        :existing-hash (get-user-visible-data user fieldspecs)
+         :edit t)
      (when sig
        (update-from-user user fieldspecs values))
      `(200 (:content-type "text/json")
