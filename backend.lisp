@@ -121,6 +121,14 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
        (check-init)
        (setf (ubiquitous:value 'users (what-user?) ,@keys) ,set-to))))
 
+(defun userfig-value-for (user &rest keys)
+  (let ((*userfig-user* user))
+    (apply #'userfig-value keys)))
+
+(defsetf userfig-value-for (user &rest keys) (set-to)
+  `(let ((*userfig-user* ,user))
+     (setf (userfig-value ,@keys) ,set-to)))
+
 (defun map-users (func)
   "Map over all of the users in userfig. Func is passed 2 parameters:
 the user name and a hash table containing user settings."
