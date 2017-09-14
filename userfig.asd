@@ -21,7 +21,6 @@
                #:cl-who)
   :serial t
   :components ((:file "package")
-               (:file "backend")
-               (:file "middleware")
-               (:file "userfig")))
+               (:file "userfig")
+               (:file "middleware")))
 
