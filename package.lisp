@@ -19,5 +19,6 @@
    #:check-init
    #:with-env
    #:get-user-list
-   #:remove-user))
+   #:remove-user
+   #:userfig-value-for))
 
