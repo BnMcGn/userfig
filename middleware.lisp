@@ -19,7 +19,7 @@
          (gadgets:split-sequence-on-subseq *userfig-path-separator* pathspec)))
     (do-fieldspecs (names fspec fieldspecs)
       (declare (ignore fspec))
-      (when (every #'gadgets:eq-symb pspec names)
+      (when (every #'string-equal pspec names)
         names))))
 
 (defun make-external-name-map (fieldspecs)
