@@ -135,10 +135,11 @@ the user name and a hash table containing user settings."
   (ubiquitous:with-transaction ()
     (with-userfig-restored
       (let ((users (gethash 'users ubiquitous:*storage*)))
-        (gadgets:collecting
-            (dolist (username (alexandria:hash-table-keys users))
-              (gadgets:collect
-                  (funcall func username (gethash username users)))))))))
+        (when (hash-table-p users)
+          (gadgets:collecting
+             (dolist (username (alexandria:hash-table-keys users))
+               (gadgets:collect
+                   (funcall func username (gethash username users))))))))))
 
 (defun get-user-list ()
   (map-users (lambda (name data) (declare (ignore data)) name)))
