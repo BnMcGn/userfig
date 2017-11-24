@@ -34,6 +34,8 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 |#
 
+(gadgets:eval-always (defparameter *userfig-user* nil))
+
 (defun normalize-userfig-fieldspec (fspec)
   (let ((names (butlast fspec))
         (fspec (car (last fspec))))

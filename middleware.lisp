@@ -34,9 +34,6 @@
      (lambda (k v) (cl-hash-util:collect (path-internal->external k) v))
      datahash)))
 
-(gadgets:eval-always
-  (defparameter *userfig-user* nil))
-
 ;;;Will consist of a list: (username fieldspecs)
 (defparameter *current-parameters* nil)
 
