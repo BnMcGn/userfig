@@ -117,19 +117,22 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       (check-init)
       (apply #'ubiquitous:value (list* 'users (what-user?) keys)))))
 
-(defsetf userfig-value (&rest keys) (set-to)
-  `(ubiquitous:with-transaction ()
-     (with-userfig-restored
-       (check-init)
-       (setf (ubiquitous:value 'users (what-user?) ,@keys) ,set-to))))
+(defun (setf userfig-value) (set-to &rest keys)
+  (ubiquitous:with-transaction ()
+    (with-userfig-restored
+      (check-init)
+      (setf (apply #'ubiquitous:value 'users (what-user?) keys) set-to))))
 
 (defun userfig-value-for (user &rest keys)
   (let ((*userfig-user* user))
     (apply #'userfig-value keys)))
 
-(defsetf userfig-value-for (user &rest keys) (set-to)
-  `(let ((*userfig-user* ,user))
-     (setf (userfig-value ,@keys) ,set-to)))
+(defun (setf userfig-value-for) (set-to user &rest keys)
+  (let ((*userfig-user* user))
+    (ubiquitous:with-transaction ()
+      (with-userfig-restored
+        (check-init)
+        (setf (apply #'ubiquitous:value 'users (what-user?) keys) set-to)))))
 
 (defun map-users (func)
   "Map over all of the users in userfig. Func is passed 2 parameters:
