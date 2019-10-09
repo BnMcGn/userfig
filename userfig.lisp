@@ -152,6 +152,8 @@ the user name and a hash table containing user settings."
 (defun remove-user (username)
   "WARNING: removes user specified by username with all settings from userfig."
   (with-userfig-restored
+    (unless (ubiquitous:value 'userfig::users username)
+      (error "User does not exist"))
     (ubiquitous:remfield
      (ubiquitous:value 'userfig::users) username)
     (ubiquitous:offload)))
