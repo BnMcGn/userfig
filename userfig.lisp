@@ -102,6 +102,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 ;;FIXME: Need to add hooks or triggers for external value watching funcs.
 (defun set-user-data (username &rest key/s-and-values)
   "This function does no safety checking!"
+  (declare (type string username))
   (ubiquitous:with-transaction ()
     (with-userfig-restored
       (gadgets:map-by-2
@@ -121,13 +122,17 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
   (ubiquitous:with-transaction ()
     (with-userfig-restored
       (check-init)
-      (setf (apply #'ubiquitous:value 'users (what-user?) keys) set-to))))
+      (let ((user (what-user?)))
+        (unless (stringp user)
+          (error "User must be a string"))
+        (setf (apply #'ubiquitous:value 'users user keys) set-to)))))
 
 (defun userfig-value-for (user &rest keys)
   (let ((*userfig-user* user))
     (apply #'userfig-value keys)))
 
 (defun (setf userfig-value-for) (set-to user &rest keys)
+  (declare (type string user))
   (let ((*userfig-user* user))
     (ubiquitous:with-transaction ()
       (with-userfig-restored
