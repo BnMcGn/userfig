@@ -121,7 +121,7 @@
           (save-url
            (lisp (concatenate 'string *userfig-url-path* "/set-user-info"))))
       (defun initialize-userfig ()
-        (ps-gadgets:json-bind (data data-url)
+        (ps-gadgets:json-bind (data data-url ())
           (render
            (psx
             (:webhax-form :fieldspecs fieldspecs :data data
