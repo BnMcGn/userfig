@@ -61,12 +61,12 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
               ,@body)))))
 
 (defun validate-fieldspecs (fieldspecs)
-  (gadgets:collecting
+  (cl-utilities:collecting
     (do-fieldspecs (names spec fieldspecs)
       (multiple-value-bind (nnames nspec)
           (normalize-userfig-fieldspec (concatenate 'list names (list spec)))
-        (mapc #'gadgets:collect nnames)
-        (gadgets:collect nspec)))))
+        (mapc #'cl-utilities:collect nnames)
+        (cl-utilities:collect nspec)))))
 
 ;;;In case that multiple user namespaces are ever needed:
 (defpackage #:userfig.usernames)
@@ -94,10 +94,11 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
       (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
        (do-fieldspecs (names tspec fieldspecs)
          (cl-hash-util:collect names
-           (gadgets:aif2only
-            (apply #'ubiquitous:value (list* 'users username names))
-            anaphora:it
-            (getf tspec :initial))))))))
+           (multiple-value-bind (data sig)
+               (apply #'ubiquitous:value (list* 'users username names))
+             (if sig
+                 data
+                 (getf tspec :initial)))))))))
 
 ;;FIXME: Need to add hooks or triggers for external value watching funcs.
 (defun set-user-data (username &rest key/s-and-values)
@@ -146,9 +147,9 @@ the user name and a hash table containing user settings."
     (with-userfig-restored
       (let ((users (gethash 'users ubiquitous:*storage*)))
         (when (hash-table-p users)
-          (gadgets:collecting
+          (cl-utilities:collecting
              (dolist (username (alexandria:hash-table-keys users))
-               (gadgets:collect
+               (cl-utilities:collect
                    (funcall func username (gethash username users))))))))))
 
 (defun get-user-list ()
@@ -186,15 +187,15 @@ the user name and a hash table containing user settings."
 (defun initialize-user (username fieldspecs)
   (apply #'set-user-data
          username
-         (gadgets:collecting
+         (cl-utilities:collecting
              (do-fieldspecs (names tspec fieldspecs)
-               (gadgets:collect names)
-               (gadgets:collect (let ((init (getf tspec :initial)))
+               (cl-utilities:collect names)
+               (cl-utilities:collect (let ((init (getf tspec :initial)))
                                   (if (functionp init)
                                       (funcall init)
                                       init))))
-           (gadgets:collect 'user-initialized-p)
-           (gadgets:collect t))))
+           (cl-utilities:collect 'user-initialized-p)
+           (cl-utilities:collect t))))
 
 (defun get-user-visible-data (username fieldspecs)
   (let ((data (get-user-data username fieldspecs)))
@@ -217,15 +218,15 @@ the user name and a hash table containing user settings."
   (let* ((keys (alexandria:hash-table-keys data-hash))
          (setkeys nil)
          (data
-          (gadgets:collecting
+          (cl-utilities:collecting
               (do-fieldspecs (names spec fieldspecs)
                 (multiple-value-bind (value signal) (gethash names data-hash)
                   (when signal
                     (if (getf spec :editable)
                         (progn
                           (push names setkeys)
-                          (gadgets:collect names)
-                          (gadgets:collect (validate-field value spec)))
+                          (cl-utilities:collect names)
+                          (cl-utilities:collect (validate-field value spec)))
                         (error "Attempt to write to read-only field"))))))))
     (unless (eq (length keys) (length setkeys))
       (error "Attempt to write to non-existent field"))

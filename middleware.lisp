@@ -90,11 +90,11 @@
     (multiple-value-bind (values sig)
        (webhax-validate:validate-batch
         (getf env :body-parameters)
-        (gadgets:collecting
+        (cl-utilities:collecting
             (do-fieldspecs (names spec fieldspecs)
               (when (getf spec :editable nil)
-                (gadgets:collect names)
-                (gadgets:collect spec))))
+                (cl-utilities:collect names)
+                (cl-utilities:collect spec))))
         :translation-table rmap
         :existing-hash (get-user-visible-data user fieldspecs)
          :edit t)
@@ -106,10 +106,10 @@
 
 (defun jsonify-fieldspecs (fieldspecs)
   (cl-json:encode-json-to-string
-   (gadgets:collecting
+   (cl-utilities:collecting
        (do-fieldspecs (names fspec fieldspecs)
-         (gadgets:collect (path-internal->external names))
-         (gadgets:collect (webhax-validate:prep-fieldspec-body-for-json fspec))))))
+         (cl-utilities:collect (path-internal->external names))
+         (cl-utilities:collect (webhax-validate:prep-fieldspec-body-for-json fspec))))))
 
 (defun userfig-js (fieldspecs)
   (ps

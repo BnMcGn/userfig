@@ -6,6 +6,7 @@
   :license "Specify license here"
   :depends-on (#:alexandria
                #:anaphora
+               #:cl-utilities
                #:gadgets
                #:ubiquitous-concurrent
                #:lack
