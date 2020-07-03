@@ -54,7 +54,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
         while ,src
         do
           (multiple-value-bind (,curr ,rest)
-              (gadgets:divide-after-true #'listp ,src)
+              (gadgets:part-after-true #'listp ,src)
             (setf ,src ,rest)
             (let ((,names (butlast ,curr))
                   (,spec (car (last ,curr))))
