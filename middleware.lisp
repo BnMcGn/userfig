@@ -16,7 +16,9 @@
 
 (defun path-external->internal (pathspec fieldspecs)
   (let ((pspec
-         (gadgets:split-sequence-on-subseq *userfig-path-separator* pathspec)))
+          (multiple-value-bind (part1 part2)
+              (gadgets:split-sequence-on-subseq *userfig-path-separator* pathspec)
+            (if part2 (list part1 part2) part1))))
     (do-fieldspecs (names fspec fieldspecs)
       (declare (ignore fspec))
       (when (every #'string-equal pspec names)
