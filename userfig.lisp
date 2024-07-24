@@ -177,11 +177,16 @@ the user name and a hash table containing user settings."
     (error "User is not initialized")))
 
 ;;;FIXME: Could just check for the username key, right?
+(defparameter *new-user-p*
+  (lambda (username)
+    (declare (type (or string symbol) username))
+    (with-userfig-restored
+      (not (ubiquitous:value 'users username 'user-initialized-p)))))
+
 (defun new-user-p (username)
   "Make sure that username does not refer to an initialized user."
-  (declare (type (or string symbol) username))
-  (with-userfig-restored
-    (not (ubiquitous:value 'users username 'user-initialized-p))))
+  ;Hook for testing
+  (funcall *new-user-p* username))
 
 ;;;FIXME: Will need some defense against exceedingly long user names.
 (defun initialize-user (username fieldspecs)
