@@ -20,5 +20,6 @@
    #:with-env
    #:get-user-list
    #:remove-user
-   #:userfig-value-for))
+   #:userfig-value-for
+   #:*new-user-p*))
 
