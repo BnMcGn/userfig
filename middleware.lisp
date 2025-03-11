@@ -36,6 +36,13 @@
      (lambda (k v) (cl-hash-util:collect (path-internal->external k) v))
      datahash)))
 
+(defun user-visible-fieldspecs (fieldspecs)
+  (cl-utilities:collecting
+    (gadgets:do-window ((k v) fieldspecs :size 2 :step 2)
+      (when (getf v :viewable)
+        (cl-utilities:collect k)
+        (cl-utilities:collect v)))))
+
 ;;;Will consist of a list: (username fieldspecs)
 (defparameter *current-parameters* nil)
 
@@ -130,6 +137,7 @@
                                     :validation-url save-url))
            (chain document (get-element-by-id "userfig-form"))))))))
 
+;;WARNING: This function has likely been overridden by the user.
 (defun settings-page (fieldspecs display-name)
   (funcall
    (webhax-route:quick-page
@@ -144,6 +152,7 @@
        ;;FIXME: This should be in body onLoad?
        ;; Might not be reliable here.
        (:script :type "text/javascript" "initializeUserfig();")))))
+
 
 ;;Mostly for debugging.
 (defmacro with-env (env &body body)
