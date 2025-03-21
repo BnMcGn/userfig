@@ -70,11 +70,13 @@
                        (,(cl-json:encode-json-to-string
                           (prep-user-data
                            (get-user-visible-data user vspecs))))))
+                ;;FIXME: must be post, should raise error on get
                 ((gadgets:sequence-starts-with subpath "/set-user-info")
                  (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
                  (let ((webhax-core:*web-env* env))
-                   (settings-page vspecs display-name)))))
+                   (settings-page vspecs display-name)))
+                (t '(404 nil ("404: Page not found")))))
             (let ((*current-parameters*
                    (list
                     (gethash :username (session-from-env env))
@@ -105,8 +107,7 @@
                 (cl-utilities:collect names)
                 (cl-utilities:collect spec))))
         :translation-table rmap
-        :existing-hash (get-user-visible-data user fieldspecs)
-         :edit t)
+        :existing-hash (get-user-visible-data user fieldspecs))
      (when sig
        (update-from-user user fieldspecs values))
      `(200 (:content-type "text/json")
