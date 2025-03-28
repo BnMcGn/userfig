@@ -96,6 +96,9 @@
       (car *current-parameters*)
       (error "No user name found")))
 
+(defun after-update-from-user-hook (user fieldspecs values)
+  (declare (ignore user fieldspecs values)))
+
 (defun handle-set-user-info (user env fieldspecs name-map)
   (let ((rmap (gadgets:invert-hash-table name-map :test #'equal)))
     (multiple-value-bind (values sig)
@@ -109,7 +112,8 @@
         :translation-table rmap
         :existing-hash (get-user-visible-data user fieldspecs))
      (when sig
-       (update-from-user user fieldspecs values))
+       (update-from-user user fieldspecs values)
+       (after-update-from-user-hook user fieldspecs values))
      `(200 (:content-type "text/json")
            (,(webhax-validate:batch-response-json
               (gadgets:rekey values rmap) sig))))))

@@ -21,5 +21,6 @@
    #:get-user-list
    #:remove-user
    #:userfig-value-for
-   #:*new-user-p*))
+   #:*new-user-p*
+   #:after-update-from-user-hook))
 
