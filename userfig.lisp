@@ -15,6 +15,8 @@ Options are:
 :type - Typespec
 :widget - A widget specifier. Optional. Widgets can generally be inferred from
   :type.
+:message - Alternate validation fail message, in case the default is unclear for
+           end users.
 :config - Options to be passed through to the widget.
 :description - One line, brief description of field
 :documentation - More in-depth usage information.
