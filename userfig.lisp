@@ -91,16 +91,17 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
 
 (defun get-user-data (username fieldspecs)
   (ubiquitous:with-transaction ()
-    (with-userfig-restored
-      (check-init)
-      (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
-       (do-fieldspecs (names tspec fieldspecs)
-         (cl-hash-util:collect names
-           (multiple-value-bind (data sig)
-               (apply #'ubiquitous:value (list* 'users username names))
-             (if sig
-                 data
-                 (getf tspec :initial)))))))))
+    (let ((*userfig-user* username))
+      (with-userfig-restored
+        (check-init)
+        (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
+          (do-fieldspecs (names tspec fieldspecs)
+            (cl-hash-util:collect names
+              (multiple-value-bind (data sig)
+                  (apply #'ubiquitous:value (list* 'users username names))
+                (if sig
+                    data
+                    (getf tspec :initial))))))))))
 
 ;;FIXME: Need to add hooks or triggers for external value watching funcs.
 (defun set-user-data (username &rest key/s-and-values)
@@ -208,7 +209,8 @@ the user name and a hash table containing user settings."
   (let ((data (get-user-data username fieldspecs)))
     (cl-hash-util:collecting-hash-table (:mode :replace :test #'equal)
       (do-fieldspecs (names tspec fieldspecs)
-        (when (getf tspec :viewable)
+        (when (or (gadgets:fetch-keyword :editable tspec)
+                  (gadgets:fetch-keyword :viewable tspec))
           (cl-hash-util:collect names (gethash names data)))))))
 
 (defun validate-field (value spec)
