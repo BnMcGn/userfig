@@ -112,7 +112,7 @@
         :translation-table rmap
         :existing-hash (get-user-visible-data user fieldspecs))
      (when sig
-       (update-from-user user fieldspecs values)
+       (update-from-user user fieldspecs values :validate nil)
        (after-update-from-user-hook user fieldspecs values))
      `(200 (:content-type "text/json")
            (,(webhax-validate:batch-response-json

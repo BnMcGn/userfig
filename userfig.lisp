@@ -101,7 +101,7 @@ store of some sort - perhaps a hash table - so it can't be an arbitrary value.
                   (apply #'ubiquitous:value (list* 'users username names))
                 (if sig
                     data
-                    (getf tspec :initial))))))))))
+                    (gadgets:fetch-keyword :initial tspec))))))))))
 
 ;;FIXME: Need to add hooks or triggers for external value watching funcs.
 (defun set-user-data (username &rest key/s-and-values)
@@ -220,10 +220,9 @@ the user name and a hash table containing user settings."
         data
         (error data))))
 
-(defun update-from-user (username fieldspecs data-hash)
+(defun update-from-user (username fieldspecs data-hash &key (validate t))
   ;;data-hash doesn't need to have all of the fields in fieldspecs
-  ;;FIXME: Maybe shouldn't update unchanged fields. Perhaps shouldn't
-  ;; validate them either?
+  ;;FIXME: Maybe shouldn't update unchanged fields.
   (let* ((keys (alexandria:hash-table-keys data-hash))
          (setkeys nil)
          (data
@@ -235,7 +234,9 @@ the user name and a hash table containing user settings."
                         (progn
                           (push names setkeys)
                           (cl-utilities:collect names)
-                          (cl-utilities:collect (validate-field value spec)))
+                          (if validate
+                              (cl-utilities:collect (validate-field value spec))
+                              (cl-utilities:collect value)))
                         (error "Attempt to write to read-only field"))))))))
     (unless (eq (length keys) (length setkeys))
       (error "Attempt to write to non-existent field"))
