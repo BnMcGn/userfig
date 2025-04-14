@@ -57,7 +57,8 @@
                    (user (gethash :username session))
                    ;;FIXME: Whole userthing needs a cleanup
                    (*userfig-user* (gethash :username session))
-                   (display-name (gethash :display-name session)))
+                   ;(display-name (gethash :display-name session))
+                   )
               (when (and user (new-user-p user))
                 (let ((*session* session)
                       (*env* env))
@@ -75,7 +76,7 @@
                  (handle-set-user-info user env vspecs external-names))
                 ((gadgets:sequence-starts-with subpath "/settings")
                  (let ((webhax-core:*web-env* env))
-                   (settings-page vspecs display-name)))
+                   (settings-page vspecs user)))
                 (t '(404 nil ("404: Page not found")))))
             (let ((*current-parameters*
                    (list
